@@ -1,5 +1,13 @@
 # TypeForge ⌨️
 
+## 🚀 Live Demo
+
+🌐 **Live Website:** https://typeforge-seven.vercel.app/
+
+⚙️ Backend API: https://typeforge-api.onrender.com/
+
+📦 **GitHub Repository:** https://github.com/zaidimam15/typeforge
+
 > **Measure. Practice. Master.**
 
 A professional, full-stack typing test web application with real-time analytics, leaderboards, gamification, and personalized practice.
