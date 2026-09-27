@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Keyboard, HelpCircle, X } from 'lucide-react'
+import { HelpCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import MainLayout from '../components/layout/MainLayout'
@@ -29,7 +29,7 @@ const TypingTestPage = () => {
 
   const [config, setConfig] = useState(DEFAULT_CONFIG)
   const [text, setText] = useState('')
-  const [testKey, setTestKey] = useState(0) // force engine re-mount
+  const [testKey, setTestKey] = useState(0)
   const [loadingText, setLoadingText] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
 
@@ -42,6 +42,7 @@ const TypingTestPage = () => {
   // Generate/fetch text
   const loadText = useCallback(async (cfg = config) => {
     setLoadingText(true)
+
     try {
       // Try to get passage from backend
       const data = await passageService.get({
@@ -58,9 +59,14 @@ const TypingTestPage = () => {
         if (cfg.mode === 'words') {
           const words = passageText.split(' ')
           passageText = words.slice(0, cfg.wordCount).join(' ')
+
           // If not enough words, generate locally
           if (words.length < cfg.wordCount) {
-            passageText = generateText({ difficulty: cfg.difficulty, wordCount: cfg.wordCount, category: cfg.category })
+            passageText = generateText({
+              difficulty: cfg.difficulty,
+              wordCount: cfg.wordCount,
+              category: cfg.category,
+            })
           }
         }
 
@@ -75,6 +81,7 @@ const TypingTestPage = () => {
         wordCount: cfg.mode === 'words' ? cfg.wordCount : 80,
         category: cfg.category,
       })
+
       setText(localText)
     } finally {
       setLoadingText(false)
@@ -109,6 +116,7 @@ const TypingTestPage = () => {
 
     // Submit to backend
     setSubmitting(true)
+
     try {
       const payload = {
         ...resultData,
@@ -129,7 +137,9 @@ const TypingTestPage = () => {
 
       if (response.newAchievements?.length > 0) {
         setNewAchievements(response.newAchievements)
-        toast.success(`🎉 ${response.newAchievements[0].name} achievement unlocked!`)
+        toast.success(
+          `🎉 ${response.newAchievements[0].name} achievement unlocked!`
+        )
       }
 
       if (response.updatedStats) {
@@ -165,36 +175,49 @@ const TypingTestPage = () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (results) {
-        if (e.key === 'Tab') { e.preventDefault(); handleRestart() }
+        if (e.key === 'Tab') {
+          e.preventDefault()
+          handleRestart()
+        }
         return
       }
+
       engine.handleKeyDown(e)
     }
 
     window.addEventListener('keydown', handleKeyDown)
+
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [engine.handleKeyDown, results, handleRestart])
 
-  const isRunning = engine.status === 'running' || engine.status === 'countdown'
-  const progress = config.mode === 'words'
-    ? (engine.currentIndex / text.length) * 100
-    : config.mode === 'time'
-      ? ((config.duration - engine.timeRemaining) / config.duration) * 100
-      : 0
+  const isRunning =
+    engine.status === 'running' || engine.status === 'countdown'
+
+  const progress =
+    config.mode === 'words'
+      ? (engine.currentIndex / text.length) * 100
+      : config.mode === 'time'
+        ? ((config.duration - engine.timeRemaining) / config.duration) * 100
+        : 0
 
   return (
     <MainLayout noFooter>
       <div className="min-h-screen flex flex-col">
+
         {/* Page Header */}
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-8">
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-8">
           {!results && (
             <div className="mb-8">
               <TestConfig
                 config={config}
                 onChange={(changes) => {
                   handleConfigChange(changes)
-                  // Auto-reload text when config changes (if not running)
-                  if (engine.status === 'idle' || engine.status === 'finished') {
+
+                  // Auto-reload text when config changes
+                  if (
+                    engine.status === 'idle' ||
+                    engine.status === 'finished'
+                  ) {
                     const newCfg = { ...config, ...changes }
                     setTimeout(() => loadText(newCfg), 100)
                   }
@@ -206,9 +229,11 @@ const TypingTestPage = () => {
         </div>
 
         {/* Main Test Area */}
-        <div className="flex-1 flex items-start justify-center px-4 sm:px-6">
-          <div className="max-w-4xl w-full">
+        <div className="flex-1 flex items-start justify-center px-4 sm:px-6 pb-10">
+          <div className="max-w-5xl w-full">
+
             <AnimatePresence mode="wait">
+
               {results ? (
                 <motion.div
                   key="results"
@@ -226,15 +251,20 @@ const TypingTestPage = () => {
                   />
                 </motion.div>
               ) : (
+
                 <motion.div
                   key="test"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="space-y-8"
                 >
+
                   {/* Stats Bar */}
                   {(isRunning || engine.status === 'paused') && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
                       <LiveStats
                         wpm={engine.wpm}
                         rawWpm={engine.rawWpm}
@@ -249,8 +279,23 @@ const TypingTestPage = () => {
                     </motion.div>
                   )}
 
-                  {/* Typing Area */}
-                  <div className="card relative min-h-[200px]">
+                  {/* =====================================================
+                      LARGE TYPING AREA
+                      ===================================================== */}
+                  <div
+                    className="
+                      card
+                      relative
+                      w-full
+                      min-h-[560px]
+                      h-[560px]
+                      px-8
+                      sm:px-10
+                      py-10
+                      overflow-hidden
+                    "
+                  >
+
                     {/* Loading overlay */}
                     {loadingText && (
                       <div className="absolute inset-0 flex items-center justify-center bg-surface/80 rounded-2xl z-10">
@@ -275,8 +320,15 @@ const TypingTestPage = () => {
                           className="absolute inset-0 flex items-center justify-center bg-surface/90 rounded-2xl z-20"
                         >
                           <div className="text-center">
-                            <p className="text-2xl font-bold text-white mb-2">Paused</p>
-                            <p className="text-dark-400 text-sm">Press <kbd className="kbd">Esc</kbd> or click Resume</p>
+                            <p className="text-2xl font-bold text-white mb-2">
+                              Paused
+                            </p>
+
+                            <p className="text-dark-400 text-sm">
+                              Press{' '}
+                              <kbd className="kbd">Esc</kbd>{' '}
+                              or click Resume
+                            </p>
                           </div>
                         </motion.div>
                       )}
@@ -284,11 +336,14 @@ const TypingTestPage = () => {
 
                     {/* Typing Text */}
                     {text && (
-                      <TypingDisplay
-                        text={text}
-                        charStates={engine.charStates}
-                        currentIndex={engine.currentIndex}
-                      />
+                      <div className="w-full h-full">
+                        <TypingDisplay
+                          key={testKey}
+                          text={text}
+                          charStates={engine.charStates}
+                          currentIndex={engine.currentIndex}
+                        />
+                      </div>
                     )}
 
                     {/* Start hint */}
@@ -296,7 +351,7 @@ const TypingTestPage = () => {
                       <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="text-center text-dark-500 text-sm mt-4"
+                        className="text-center text-dark-500 text-sm mt-6"
                       >
                         Start typing to begin the test
                       </motion.p>
@@ -313,21 +368,42 @@ const TypingTestPage = () => {
 
                   {/* Keyboard Shortcuts hint */}
                   <div className="text-center space-x-4 text-xs text-dark-600">
-                    <span><kbd className="px-1.5 py-0.5 rounded bg-dark-700 text-dark-500 font-mono text-xs">Tab</kbd> restart</span>
-                    <span><kbd className="px-1.5 py-0.5 rounded bg-dark-700 text-dark-500 font-mono text-xs">Esc</kbd> pause</span>
-                    <button onClick={() => setShowHelp(true)} className="text-dark-600 hover:text-dark-400 transition-colors">
+                    <span>
+                      <kbd className="px-1.5 py-0.5 rounded bg-dark-700 text-dark-500 font-mono text-xs">
+                        Tab
+                      </kbd>{' '}
+                      restart
+                    </span>
+
+                    <span>
+                      <kbd className="px-1.5 py-0.5 rounded bg-dark-700 text-dark-500 font-mono text-xs">
+                        Esc
+                      </kbd>{' '}
+                      pause
+                    </span>
+
+                    <button
+                      onClick={() => setShowHelp(true)}
+                      className="text-dark-600 hover:text-dark-400 transition-colors"
+                    >
                       <HelpCircle size={12} className="inline" /> shortcuts
                     </button>
                   </div>
+
                 </motion.div>
               )}
+
             </AnimatePresence>
           </div>
         </div>
       </div>
 
       {/* Help Modal */}
-      <Modal isOpen={showHelp} onClose={() => setShowHelp(false)} title="Keyboard Shortcuts">
+      <Modal
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
+        title="Keyboard Shortcuts"
+      >
         <div className="space-y-3">
           {[
             { key: 'Tab', action: 'Restart test' },
@@ -335,13 +411,22 @@ const TypingTestPage = () => {
             { key: 'Esc', action: 'Pause / unpause' },
             { key: 'Backspace', action: 'Delete last character' },
           ].map(s => (
-            <div key={s.key} className="flex items-center justify-between">
-              <kbd className="px-2.5 py-1.5 rounded-lg bg-dark-700 text-dark-200 font-mono text-sm">{s.key}</kbd>
-              <span className="text-dark-400 text-sm">{s.action}</span>
+            <div
+              key={s.key}
+              className="flex items-center justify-between"
+            >
+              <kbd className="px-2.5 py-1.5 rounded-lg bg-dark-700 text-dark-200 font-mono text-sm">
+                {s.key}
+              </kbd>
+
+              <span className="text-dark-400 text-sm">
+                {s.action}
+              </span>
             </div>
           ))}
         </div>
       </Modal>
+
     </MainLayout>
   )
 }
