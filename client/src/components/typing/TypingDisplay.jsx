@@ -4,7 +4,7 @@ const TypingDisplay = ({
   text,
   charStates,
   currentIndex,
-  fontSize = 'large'
+  fontSize = 'large',
 }) => {
   const fontSizeClass = {
     small: 'text-lg',
@@ -18,11 +18,10 @@ const TypingDisplay = ({
   return (
     <div
       className="relative w-full h-full overflow-hidden"
+      aria-label="Typing text area"
       style={{
         minHeight: '450px',
-        maxHeight: '600px',
       }}
-      aria-label="Typing text area"
     >
       <p
         className={`font-mono ${fontSizeClass} tracking-wide select-none`}
@@ -31,6 +30,11 @@ const TypingDisplay = ({
           letterSpacing: '0.03em',
           margin: 0,
           padding: '12px 4px',
+
+          // Keep normal word wrapping
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'break-word',
+          wordBreak: 'normal',
         }}
       >
         {chars.map((char, idx) => {
@@ -61,11 +65,14 @@ const TypingDisplay = ({
               key={idx}
               className={className}
               data-idx={idx}
+              style={{
+                position: 'relative',
+              }}
             >
-              {isCurrent && (
-                <span className="typing-cursor" />
-              )}
+              {/* Cursor stays BEFORE current character */}
+              {isCurrent && <span className="typing-cursor" />}
 
+              {/* Normal space so words can wrap to next line */}
               {char}
             </span>
           )

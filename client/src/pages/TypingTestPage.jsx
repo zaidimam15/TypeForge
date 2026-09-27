@@ -94,10 +94,13 @@ const TypingTestPage = () => {
   }, [])
 
   // Config change handler
-  const handleConfigChange = useCallback((changes) => {
-    const newConfig = { ...config, ...changes }
-    setConfig(newConfig)
-  }, [config])
+  const handleConfigChange = useCallback(
+    (changes) => {
+      const newConfig = { ...config, ...changes }
+      setConfig(newConfig)
+    },
+    [config]
+  )
 
   // Typing engine
   const engine = useTypingEngine({
@@ -168,26 +171,40 @@ const TypingTestPage = () => {
 
     // Generate new text
     await loadText()
-    setTestKey(k => k + 1)
+    setTestKey((k) => k + 1)
   }, [engine, loadText])
 
   // Global keyboard listener
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // ============================================================
+      // IMPORTANT:
+      // Prevent browser from scrolling the page when Space is pressed.
+      // Space should only be handled by the typing engine.
+      // ============================================================
+      if (e.code === 'Space' && !results) {
+        e.preventDefault()
+      }
+
+      // Result screen shortcuts
       if (results) {
         if (e.key === 'Tab') {
           e.preventDefault()
           handleRestart()
         }
+
         return
       }
 
+      // Send keyboard input to typing engine
       engine.handleKeyDown(e)
     }
 
     window.addEventListener('keydown', handleKeyDown)
 
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [engine.handleKeyDown, results, handleRestart])
 
   const isRunning =
@@ -219,7 +236,10 @@ const TypingTestPage = () => {
                     engine.status === 'finished'
                   ) {
                     const newCfg = { ...config, ...changes }
-                    setTimeout(() => loadText(newCfg), 100)
+
+                    setTimeout(() => {
+                      loadText(newCfg)
+                    }, 100)
                   }
                 }}
                 disabled={isRunning}
@@ -234,6 +254,9 @@ const TypingTestPage = () => {
 
             <AnimatePresence mode="wait">
 
+              {/* ====================================================
+                  RESULT SCREEN
+                  ==================================================== */}
               {results ? (
                 <motion.div
                   key="results"
@@ -252,6 +275,9 @@ const TypingTestPage = () => {
                 </motion.div>
               ) : (
 
+                /* ====================================================
+                   TEST SCREEN
+                   ==================================================== */
                 <motion.div
                   key="test"
                   initial={{ opacity: 0 }}
@@ -279,9 +305,9 @@ const TypingTestPage = () => {
                     </motion.div>
                   )}
 
-                  {/* =====================================================
+                  {/* =================================================
                       LARGE TYPING AREA
-                      ===================================================== */}
+                      ================================================= */}
                   <div
                     className="
                       card
@@ -410,7 +436,7 @@ const TypingTestPage = () => {
             { key: 'Ctrl + Enter', action: 'Restart test' },
             { key: 'Esc', action: 'Pause / unpause' },
             { key: 'Backspace', action: 'Delete last character' },
-          ].map(s => (
+          ].map((s) => (
             <div
               key={s.key}
               className="flex items-center justify-between"
@@ -426,7 +452,6 @@ const TypingTestPage = () => {
           ))}
         </div>
       </Modal>
-
     </MainLayout>
   )
 }
